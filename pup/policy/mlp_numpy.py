@@ -31,13 +31,15 @@ class NumpyPolicy:
         # ===== TODO(student): Unpack the archive into layers and metadata =====
         self.obs_mean = archive["obs_mean"]
         self.obs_std = archive["obs_std"]
-        self.n_layers = int(archive["n_layers"])
         self.obs_size = int(archive["obs_size"])
         self.action_size = int(archive["action_size"])
         self.action_scale = float(archive["action_scale"])
         self.default_pose = archive["default_pose"]
-        self.kernels = [archive[f"kernel_{i}"] for i in range(self.n_layers)]
-        self.biases = [archive[f"bias_{i}"] for i in range(self.n_layers)]
+        self.kernels = []
+        self.biases = []
+        for i in range(int(archive["n_layers"])):
+            self.kernels.append(archive["kernel_" + str(i)])
+            self.biases.append(archive["bias_" + str(i)])
         # ===== end TODO =====
 
     @classmethod
@@ -50,14 +52,14 @@ class NumpyPolicy:
         """Map a (45,) observation to a (12,) action in [-1, 1], unitless."""
         # ===== TODO(student): Normalize, run the MLP, and squash with tanh =====
         x = (obs - self.obs_mean) / self.obs_std
-        for i in range(self.n_layers - 1):
+        for i in range(len(self.kernels) - 1):
             x = swish(x @ self.kernels[i] + self.biases[i])
-        logits = x @ self.kernels[-1] + self.biases[-1]
-        return np.tanh(logits[:12])                 
+        x = x @ self.kernels[-1] + self.biases[-1]
+        return np.tanh(x[:12])         
         # ===== end TODO =====
 
     def joint_targets(self, obs: np.ndarray) -> np.ndarray:
         """Map a (45,) observation to (12,) joint position targets in rad."""
         # ===== TODO(student): Convert the action into absolute joint targets =====
-        return self.default_pose + self.action_scale * self(obs)        
+        return self.default_pose + self.action_scale * self(obs)
         # ===== end TODO =====
