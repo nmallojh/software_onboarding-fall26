@@ -59,10 +59,30 @@ def export_policy(params: Any, normalizer_params: Any, out_path: str | Path) -> 
     ``obs_layout``.
     """
     # ===== TODO(student): Walk the Brax parameter tree and serialize it =====
-    raise NotImplementedError(
-        "Stage 4: Walk the Brax parameter tree and serialize it. See docs/04_training_with_brax.md")
-    # ===== end TODO =====
+    layers = params["params"]
+    names = sorted(layers, key=_layer_index)
 
+    data = {}
+    data["obs_mean"] = np.asarray(normalizer_params.mean)
+    data["obs_std"] = np.asarray(normalizer_params.std)
+
+    for i, name in enumerate(names):
+        data[f"kernel_{i}"] = np.asarray(layers[name]["kernel"])
+        data[f"bias_{i}"] = np.asarray(layers[name]["bias"])
+
+    data["n_layers"] = len(names)
+    data["obs_size"] = 45
+    data["action_size"] = 12
+    data["action_scale"] = ACTION_SCALE
+    data["default_pose"] = DEFAULT_POSE
+    data["hidden_activation"] = "swish"
+    data["obs_layout"] = OBS_LAYOUT
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(out_path, **data)
+    return out_path
+    # ===== end TODO =====
 
 def load_brax_params(checkpoint: str | Path) -> tuple:
     """Load ``(normalizer_params, policy_params)`` from a ``.pkl`` or an Orbax directory.
