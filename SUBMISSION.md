@@ -1,20 +1,20 @@
 # Submission — HRC Software Onboarding Fall 2026
 
-**Name:**
-**Discord handle:**
-**Repository:**
-**Date:**
+**Name:** Niveditha Mallojhala
+**Discord handle:** nivedithaa
+**Repository:** https://github.com/nmallojh/software_onboarding-fall26
+**Date:** 11/4/26
 
 ---
 
 ## Stage checklist
 
-- [ ] **Stage 0** — Setup. `scripts/check_setup.py` exits 0.
-- [ ] **Stage 1** — MuJoCo + PD controller. Tests green.
-- [ ] **Stage 2** — JAX exercises. Tests green.
-- [ ] **Stage 3** — MJX environment. Tests green.
+- [x] **Stage 0** — Setup. `scripts/check_setup.py` exits 0.
+- [x] **Stage 1** — MuJoCo + PD controller. Tests green.
+- [x] **Stage 2** — JAX exercises. Tests green.
+- [x] **Stage 3** — MJX environment. Tests green.
 - [x] **Stage 4** — Brax PPO. Trained a policy, exported it, `NumpyPolicy` matches.
-- [ ] **Stage 5** — ROS 2 sim2sim. Smoke test green, teleop GIF recorded.
+- [x] **Stage 5** — ROS 2 sim2sim. Smoke test green, teleop GIF recorded.
 
 ## `scripts/progress.py` output
 
@@ -24,7 +24,23 @@
 ```
 $ uv run python scripts/progress.py --slow
 
-(paste)
+Pup onboarding progress
+  ✓ PASSED        Stage 1  MuJoCo + PD controller    12 passed, 0 failed, 0 not started, 0 skipped
+  ✓ PASSED        Stage 2  JAX for robotics          9 passed, 0 failed, 0 not started, 0 skipped
+  ✓ PASSED        Stage 3  MJX environment           11 passed, 0 failed, 0 not started, 0 skipped
+  ✓ PASSED        Stage 4  Brax PPO + export         4 passed, 0 failed, 0 not started, 0 skipped
+36 passed, 1 skipped, 2 deselected, 2 warnings in 82.58s (0:01:22)
+
+==============================================================================
+PUP ONBOARDING PROGRESS
+==============================================================================
+✓ PASSED         Stage 1  MuJoCo + PD controller    12 passing
+✓ PASSED         Stage 2  JAX for robotics          9 passing
+✓ PASSED         Stage 3  MJX environment           11 passing
+✓ PASSED         Stage 4  Brax PPO + export         4 passing
+◻ CONTAINER      Stage 5  ROS 2 sim2sim             run tests/test_05_ros2_smoke.sh inside docker/ros2
+==============================================================================
+Every TODO(student) block is written. Nice.
 ```
 
 </details>
@@ -135,14 +151,53 @@ Yes, `walking_passes: true`. Forward 1.0 m/s: 1.02 m/s with 0 falls. Turn 1.0 ra
 Teleop GIF: `results/sim2sim_teleop.gif`
 
 ```json
-(paste results/eval_sim2sim.json)
+{
+  "duration_s": 20.0,
+  "min_trunk_height": 0.29093991224488114,
+  "fell": false,
+  "commands": [
+    {
+      "command": [0.5, 0.0, 0.0],
+      "n_samples": 151,
+      "mean_velocity": [0.38479376129890286, 0.0106937827024374, -2.4290995011487333e-05],
+      "mean_abs_error": [0.11520623870109714, 0.0106937827024374, 2.4290995011487333e-05],
+      "mean_speed": 0.3850314944375795,
+      "threshold": 0.25,
+      "passed": true
+    },
+    {
+      "command": [1.0, 0.0, 0.0],
+      "n_samples": 150,
+      "mean_velocity": [0.9571918583430238, -0.004541143192763933, -0.004551534701725785],
+      "mean_abs_error": [0.04280814165697622, 0.004541143192763933, 0.004551534701725785],
+      "mean_speed": 0.9575321052512068
+    },
+    {
+      "command": [0.0, 0.0, 1.0],
+      "n_samples": 150,
+      "mean_velocity": [-0.09118876190059248, 0.07304885236797051, 0.9924880609558194],
+      "mean_abs_error": [0.09118876190059248, 0.07304885236797051, 0.007511939044180571],
+      "mean_speed": 0.11869546617108592
+    },
+    {
+      "command": [0.0, 0.0, 0.0],
+      "n_samples": 150,
+      "mean_velocity": [-0.001134103018101549, -3.926425226513982e-05, 0.000648867990458022],
+      "mean_abs_error": [0.001134103018101549, 3.926425226513982e-05, 0.000648867990458022],
+      "mean_speed": 0.002677799633654086
+    }
+  ],
+  "passed": true
+}
 ```
 
-Measured `/pup/joint_command` rate from `ros2 topic hz`:
+Measured `/pup/joint_command` rate from `ros2 topic hz`: ~50.0 Hz (average rate 50.006)
+
+Sim2sim gap: At a 0.5 m/s command, the reference policy walked 0.385 m/s through ROS, but the doc reports it reaches 0.52 m/s in MJX (my own policy reached 0.54 m/s in MJX in Stage 4). The same policy gets a different result because the two simulators handle ground contact and motor control differently.
 
 ## Escape hatches used
 
-- [ ] I used `checkpoints/pup_joystick_flat_reference.npz` for Stage 5 instead
+- [x] I used `checkpoints/pup_joystick_flat_reference.npz` for Stage 5 instead
       of my own policy.
 - [ ] Other (describe):
 
@@ -153,25 +208,24 @@ Measured `/pup/joint_command` rate from `ros2 topic hz`:
 **List two ways sim2sim can pass while real hardware still fails, and what you
 would add to the sim node to catch each.**
 
->
+> 1. Motor delay: the sim applies commands instantly, but real motors lag about 5–15 ms. I'd add a short delay to commands in sim_node.
+> 2. IMU errors: the sim gives perfect IMU readings, but a real IMU drifts and has noise. I'd add drift and noise to the IMU data sim_node publishes.
 
 ## What was hardest?
 
-One paragraph. This is will help us improve onboarding.
-
->
+> The hardest part was understanding what was actually going on, not just writing the code. Things like what kernels and biases are, why the observation needs to be normalized, and why the policy has to be exported to numpy for the robot took me a while to get. Once I understood the big picture, the TODOs made a lot more sense.
 
 ## Time spent
 
 | Stage | Hours |
 |---|---|
-| 0 Setup | |
-| 1 MuJoCo + PD | |
-| 2 JAX | |
-| 3 MJX env | |
-| 4 Brax + export | |
-| 5 ROS 2 | |
-| **Total** | |
+| 0 Setup | 0.5 |
+| 1 MuJoCo + PD | 3 |
+| 2 JAX | 4 |
+| 3 MJX env | 7 |
+| 4 Brax + export | 3 |
+| 5 ROS 2 | 3 |
+| **Total** | 20.5 |
 
 ---
 
