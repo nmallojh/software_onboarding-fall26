@@ -63,12 +63,14 @@ def export_policy(params: Any, normalizer_params: Any, out_path: str | Path) -> 
     names = sorted(layers, key=_layer_index)
 
     data = {}
-    data["obs_mean"] = np.asarray(normalizer_params.mean)
-    data["obs_std"] = np.asarray(normalizer_params.std)
+    data["obs_mean"] = normalizer_params.mean
+    data["obs_std"] = normalizer_params.std
 
-    for i, name in enumerate(names):
-        data[f"kernel_{i}"] = np.asarray(layers[name]["kernel"])
-        data[f"bias_{i}"] = np.asarray(layers[name]["bias"])
+    i = 0
+    for name in names:
+        data["kernel_" + str(i)] = layers[name]["kernel"]
+        data["bias_" + str(i)] = layers[name]["bias"]
+        i = i + 1
 
     data["n_layers"] = len(names)
     data["obs_size"] = 45
